@@ -1,0 +1,68 @@
+name: DevSecOps CI/CD Pipeline
+
+# When to run this pipeline
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # Job 1: Run Tests
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: pip install -r app/requirements.txt
+      
+      - name: Run tests
+        run: pytest tests/ -v
+
+  # Job 2: Security Scan (SAST)
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install Bandit
+        run: pip install bandit
+      
+      - name: Run Bandit (Python Security Scanner)
+        run: bandit -r app/ -f txt || true
+
+  # Job 3: Build and Scan Docker Image
+  build-and-scan:
+    name: Build & Scan Container
+    runs-on: ubuntu-latest
+    needs: [test, security-scan]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Build Docker image
+        run: docker build -t devsecops-app:${{ github.sha }} -f docker/Dockerfile .
+      
+      - name: Install Trivy
+        run: |
+          sudo apt-get install -y wget
+          wget https://github.com/aquasecurity/trivy/releases/download/v0.48.0/trivy_0.48.0_Linux-64bit.deb
+          sudo dpkg -i trivy_0.48.0_Linux-64bit.deb
+      
+      - name: Scan Docker image with Trivy
+        run: trivy image --severity HIGH,CRITICAL devsecops-app:${{ github.sha }} || true
