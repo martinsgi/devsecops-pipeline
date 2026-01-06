@@ -90,8 +90,8 @@ pytest tests/ -v
 ## 🏗️ Project Status
 
 - [x] Phase 1: Flask Application
-- [ ] Phase 2: Docker Containerization
-- [ ] Phase 3: CI/CD Pipeline
+- [x] Phase 2: Docker Containerization
+- [x] Phase 3: CI/CD Pipeline
 - [ ] Phase 4: Infrastructure as Code
 - [ ] Phase 5: Monitoring
 - [ ] Phase 6: Documentation
